@@ -1,0 +1,11 @@
+# CMake build tree, including the fetched dependencies and the built .asi
+build/
+out/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Runtime output, written next to the plugin in the game folder
+AtelierReslerianaFix.log
