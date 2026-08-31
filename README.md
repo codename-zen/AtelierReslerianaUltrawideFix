@@ -76,6 +76,7 @@ Verified in game at 3440x1440:
 - Root canvases corrected from `5160x2902` back to their `3840x2160` design size, so UI elements are their intended size.
 - Character portraits render with correct proportions.
 
-Known limitation: with the default `Mode = viewport`, in-game full-screen menus have black bars at the sides, because their backdrop is a UI element drawn by the very camera that has to be narrowed.
-`Mode = off` trades the 16:9 HUD lock for a full-width picture with no bars, which is the better deal for some people; element sizes stay corrected either way.
+The default is `Mode = off`: no HUD lock, a full-width picture with no black bars, and element sizes still corrected. It is the configuration verified end to end, and the one `NudgeElements` is calibrated for.
+
+`Mode = viewport` is the alternative, and the only mode that truly locks the HUD to 16:9. Its cost is that in-game full-screen menus get black bars at the sides, because their backdrop is a UI element drawn by the very camera that has to be narrowed. Switching to it means clearing `NudgeElements`, whose offset is derived from the wider canvas that `off` produces.
 `Mode = anchors` was an attempt to have both, and it does not work on this game - see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for what it did and why.

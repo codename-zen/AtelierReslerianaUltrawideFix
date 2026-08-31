@@ -245,6 +245,14 @@ Two things the walk needed, both found the slow way:
 - **Depth costs budget.**
   The panel sits behind several hundred item icons, so a 600 node walk never reached it while the 6000 node dump did. The walk now stops as soon as every entry is placed, which keeps a 250 ms cadence affordable; at one second the panel visibly jumped into place after a menu opened.
 
+**A nudge offset is only valid for one `Mode`.**
+The offset is derived from how far the canvas grew, so it depends on how wide the canvas is, and that is exactly what `Mode` decides.
+`-660` is right for `Mode = off`, where the canvas reaches 5160 units at 3440x1440.
+Under `Mode = viewport` the canvas is already 3840, the panel never drifts at all, and the same line pushes it out the other way.
+The shipped defaults are therefore paired: `Mode = off` with the nudge set, and switching to `viewport` means clearing `NudgeElements`.
+
+This was learned by clobbering it. Deploying the repository's INI over the one in the game folder replaced a working `Mode = off` with `viewport`, which brought the black bars back and misapplied the nudge on top -- looking far worse than either change alone, and not caused by the build it arrived with.
+
 Matching is by substring, so clone suffixes do not matter -- and neither does specificity, which is the catch.
 `Image_win` is a generic name, so every panel using it moves. That is right where the same displacement applies and wrong where a panel is meant to stay centred, so a new nudge is worth checking across a few screens.
 

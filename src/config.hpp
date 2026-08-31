@@ -49,7 +49,7 @@ struct Config {
     // whole screen, and pushes the HUD into a centred band by remapping the
     // horizontal anchors of each canvas's direct children instead.
     // "off" disables both.
-    std::string hud_mode = "viewport";
+    std::string hud_mode = "off";
     // Whether nested canvases get their children remapped too. A nested canvas
     // is itself a child of the root, so in principle moving the root's children
     // is enough -- but only if the chain is actually anchored rather than sized
