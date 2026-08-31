@@ -226,7 +226,33 @@ already produces an exact 16:9 HUD.
 The code is kept behind `Mode = anchors` because the approach is sound for a
 title whose UI is anchor-driven; it is simply not this one.
 
-## 10. Per-element nudges
+## 10. Render textures shown in fixed slots
+
+The Party screen draws its live character with a camera that renders into a
+screen-sized texture, and the UI shows that texture in a slot of fixed size.
+The whole texture is mapped onto the slot however wide it got, so a wider screen
+squeezes everything drawn into it.
+
+At 16:9 the texture is 2560x1440; at 3440x1440 it is 2.3889 wide against a slot
+built for 1.7778, and the character came out 26 percent narrow -- `1.7778 /
+2.3889 = 0.744`, the same factor that turned up in the canvas inflation.
+
+The fix is compensation rather than correction. The texture stays screen-sized
+and the camera renders at `LockAspect` instead, which stretches the image inside
+the texture by 1.344; the slot then squeezes it by 0.744 and the two cancel.
+
+The condition is deliberately narrow -- a camera with a target texture whose
+aspect is wider than `LockAspect` -- so cameras drawing straight to screen are
+untouched, and so is any texture already at 16:9 or narrower. In practice
+exactly one camera matches. If some other render target ever looks stretched
+horizontally, `CorrectRenderTextureAspect = false` is the first thing to try.
+
+Worth separating from the earlier "penyet" bug, which looked identical on
+screen. That one was a camera whose *own* aspect had been forced to the screen's
+while its viewport was 16:9. This one is a camera whose aspect is right for its
+texture, and wrong for where the texture ends up.
+
+## 11. Per-element nudges
 
 Some layout is wrong at a wide aspect before this fix touches anything.
 The Inventory description panel is the clear case: `Image_win`, 3544x756, anchored dead centre, while the label column beside it is pinned left.
@@ -259,7 +285,7 @@ This was learned by clobbering it. Deploying the repository's INI over the one i
 Matching is by substring, so clone suffixes do not matter -- and neither does specificity, which is the catch.
 `Image_win` is a generic name, so every panel using it moves. That is right where the same displacement applies and wrong where a panel is meant to stay centred, so a new nudge is worth checking across a few screens.
 
-## 11. Adding another hook
+## 12. Adding another hook
 
 1. Resolve it in `unity::resolve()` with `il2cpp::method_pointer(il2cpp::find_method(klass, "Name", argc))`.
 2. Write a detour matching IL2CPP's convention, remembering the trailing `const MethodInfo*`, and pass structs larger than 8 bytes by pointer.

@@ -42,6 +42,7 @@ Call g_camera_get_orthographic_size;
 Call g_component_get_transform;
 Call g_rect_transform_get_rect;
 Call g_camera_get_aspect;
+Call g_camera_set_aspect;
 Call g_camera_reset_aspect;
 Call g_texture_get_width;
 Call g_texture_get_height;
@@ -360,6 +361,13 @@ float camera_viewport_aspect(void* camera) {
     return screen * (rect.width / rect.height);
 }
 
+void set_camera_aspect(void* camera, float aspect) {
+    if (!g_camera_set_aspect || !camera)
+        return;
+    reinterpret_cast<void (*)(void*, float, const MethodInfo*)>(g_camera_set_aspect.ptr)(
+        camera, aspect, g_camera_set_aspect.info);
+}
+
 void camera_reset_aspect(void* camera) {
     if (!g_camera_reset_aspect || !camera)
         return;
@@ -497,7 +505,11 @@ bool resolve() {
     if (!camera || !screen || !time)
         return false;
 
-    g_bindings.camera_set_aspect = il2cpp::method_pointer(il2cpp::find_method(camera, "set_aspect", 1));
+    const MethodInfo* set_aspect = il2cpp::find_method(camera, "set_aspect", 1);
+    g_bindings.camera_set_aspect = il2cpp::method_pointer(set_aspect);
+    g_bindings.camera_set_aspect_info = set_aspect;
+    g_camera_set_aspect = make_call(set_aspect);
+
     const MethodInfo* set_rect = il2cpp::find_method(camera, "set_rect", 1);
     g_bindings.camera_set_rect = il2cpp::method_pointer(set_rect);
     g_bindings.camera_set_rect_info = set_rect;

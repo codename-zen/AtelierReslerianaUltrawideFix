@@ -438,6 +438,41 @@ void relax_black_clear(void* camera) {
     }
 }
 
+// A camera drawing into a screen-sized render texture that is then shown in a
+// fixed-size UI slot has everything it drew squeezed by the slot, because the
+// whole texture is mapped onto it however wide the texture got. The Party
+// screen's live character was 26 percent narrow at 21:9 for exactly this
+// reason: 1.7778 / 2.3889 = 0.744.
+//
+// Rendering at the locked aspect instead pre-stretches the image inside the
+// texture by the same factor the slot squeezes out, and the two cancel.
+void correct_render_texture_aspect(void* camera) {
+    if (!g_config.correct_render_texture_aspect || g_config.lock_hud_aspect <= 0.0f || !camera)
+        return;
+
+    int width = 0;
+    int height = 0;
+    unity::camera_target_texture_size(camera, width, height);
+    if (width <= 0 || height <= 0)
+        return;
+
+    const float texture_aspect = static_cast<float>(width) / static_cast<float>(height);
+    if (texture_aspect <= g_config.lock_hud_aspect + 0.001f)
+        return;
+
+    if (std::fabs(unity::camera_aspect(camera) - g_config.lock_hud_aspect) < 0.001f)
+        return;
+
+    unity::set_camera_aspect(camera, g_config.lock_hud_aspect);
+
+    static int logged = 0;
+    if (logged < 8) {
+        ++logged;
+        LOG_INFO("Camera '{}' draws into a {}x{} texture shown in a fixed slot; aspect -> {:.4f}",
+                 unity::object_name(camera), width, height, g_config.lock_hud_aspect);
+    }
+}
+
 void enforce_hud_viewport() {
     if (g_config.lock_hud_aspect <= 0.0f || !unity::bindings().camera_set_rect_info)
         return;
@@ -500,6 +535,7 @@ void enforce_hud_viewport() {
         if (is_hud_camera_name(unity::object_name(camera)))
             pin_camera(camera, left, camera_fraction, "name");
         relax_black_clear(camera);
+        correct_render_texture_aspect(camera);
     }
 }
 

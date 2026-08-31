@@ -20,6 +20,11 @@ struct Config {
     // [AspectRatio]
     bool unlock_camera_aspect = true;
     bool remove_viewport_letterbox = true;
+    // A camera drawing into a screen-sized render texture, shown in a
+    // fixed-size UI slot, hands the whole texture to that slot. A wider screen
+    // therefore squeezes what it drew. Rendering at the locked aspect instead
+    // pre-stretches it by exactly what the slot then squeezes out.
+    bool correct_render_texture_aspect = true;
 
     // [FOV]
     float additional_vertical_fov = 0.0f;

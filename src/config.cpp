@@ -56,6 +56,8 @@ void load_config(const std::filesystem::path& ini_path) {
 
     read(ini, "AspectRatio", "UnlockCameraAspect", g_config.unlock_camera_aspect);
     read(ini, "AspectRatio", "RemoveViewportLetterbox", g_config.remove_viewport_letterbox);
+    read(ini, "AspectRatio", "CorrectRenderTextureAspect",
+         g_config.correct_render_texture_aspect);
 
     read(ini, "FOV", "AdditionalVerticalFOV", g_config.additional_vertical_fov);
     read(ini, "FOV", "CorrectVertMinusFOV", g_config.correct_vert_minus_fov);

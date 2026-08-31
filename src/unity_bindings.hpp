@@ -34,6 +34,7 @@ struct Bindings {
     void* camera_set_aspect = nullptr;
     void* camera_set_rect = nullptr;
     const MethodInfo* camera_set_rect_info = nullptr;
+    const MethodInfo* camera_set_aspect_info = nullptr;
     void* camera_set_field_of_view = nullptr;
     void* canvas_scaler_handle = nullptr;
     void* time_get_delta_time = nullptr;
@@ -91,6 +92,7 @@ float camera_aspect(void* camera);
 // Aspect of the camera's viewport, which is what its projection should match.
 float camera_viewport_aspect(void* camera);
 void camera_reset_aspect(void* camera);
+void set_camera_aspect(void* camera, float aspect);
 // Size of the camera's render target, 0x0 when it draws straight to screen.
 void camera_target_texture_size(void* camera, int& width, int& height);
 float camera_orthographic_size(void* camera);
