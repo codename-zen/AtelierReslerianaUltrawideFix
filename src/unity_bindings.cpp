@@ -1,5 +1,8 @@
 #include "unity_bindings.hpp"
 
+#include <cstdint>
+#include <cstring>
+
 #include "log.hpp"
 
 namespace unity {
@@ -44,6 +47,38 @@ Call g_texture_get_width;
 Call g_texture_get_height;
 Call g_transform_get_child_count;
 Call g_transform_get_child;
+Call g_rt_get_anchor_min;
+Call g_rt_get_anchor_max;
+Call g_rt_set_anchor_min;
+Call g_rt_set_anchor_max;
+
+// A Vector2 travels in an integer register on this ABI, so it is moved as raw
+// bits rather than cast, which would go through the wrong register class.
+uint64_t pack(Vector2 value) {
+    uint64_t bits = 0;
+    std::memcpy(&bits, &value, sizeof(value));
+    return bits;
+}
+
+Vector2 unpack(uint64_t bits) {
+    Vector2 value{0.0f, 0.0f};
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+Vector2 get_vector2(const Call& call, void* instance) {
+    if (!call || !instance)
+        return Vector2{0.0f, 0.0f};
+    return unpack(reinterpret_cast<uint64_t (*)(void*, const MethodInfo*)>(call.ptr)(
+        instance, call.info));
+}
+
+void set_vector2(const Call& call, void* instance, Vector2 value) {
+    if (!call || !instance)
+        return;
+    reinterpret_cast<void (*)(void*, uint64_t, const MethodInfo*)>(call.ptr)(
+        instance, pack(value), call.info);
+}
 Call g_screen_get_safe_area;
 Call g_screen_get_current_resolution;
 Call g_display_get_main;
@@ -55,6 +90,7 @@ Call g_camera_get_pixel_width;
 Call g_canvas_get_scale_factor;
 Call g_canvas_set_scale_factor;
 Call g_canvas_is_root;
+Call g_canvas_get_root;
 Call g_camera_get_clear_flags;
 Call g_camera_set_clear_flags;
 Call g_camera_get_depth;
@@ -352,6 +388,18 @@ void* transform_child(void* transform, int index) {
         g_transform_get_child.ptr)(transform, index, g_transform_get_child.info);
 }
 
+Vector2 anchor_min(void* rect_transform) { return get_vector2(g_rt_get_anchor_min, rect_transform); }
+
+Vector2 anchor_max(void* rect_transform) { return get_vector2(g_rt_get_anchor_max, rect_transform); }
+
+void set_anchor_min(void* rect_transform, Vector2 value) {
+    set_vector2(g_rt_set_anchor_min, rect_transform, value);
+}
+
+void set_anchor_max(void* rect_transform, Vector2 value) {
+    set_vector2(g_rt_set_anchor_max, rect_transform, value);
+}
+
 Rect transform_rect(void* transform) {
     Rect rect{0.0f, 0.0f, 0.0f, 0.0f};
     if (!g_rect_transform_get_rect || !transform)
@@ -359,6 +407,13 @@ Rect transform_rect(void* transform) {
     reinterpret_cast<void (*)(Rect*, void*, const MethodInfo*)>(g_rect_transform_get_rect.ptr)(
         &rect, transform, g_rect_transform_get_rect.info);
     return rect;
+}
+
+void* canvas_root(void* canvas) {
+    if (!g_canvas_get_root || !canvas)
+        return nullptr;
+    return reinterpret_cast<Il2CppObject* (*)(void*, const MethodInfo*)>(g_canvas_get_root.ptr)(
+        canvas, g_canvas_get_root.info);
 }
 
 bool canvas_is_root(void* canvas) {
@@ -502,8 +557,13 @@ bool resolve() {
         g_component_get_transform = make_call(il2cpp::find_method(component, "get_transform", 0));
 
     if (Il2CppClass* rect_transform =
-            il2cpp::find_class(kCoreModule, "UnityEngine", "RectTransform"))
+            il2cpp::find_class(kCoreModule, "UnityEngine", "RectTransform")) {
         g_rect_transform_get_rect = make_call(il2cpp::find_method(rect_transform, "get_rect", 0));
+        g_rt_get_anchor_min = make_call(il2cpp::find_method(rect_transform, "get_anchorMin", 0));
+        g_rt_get_anchor_max = make_call(il2cpp::find_method(rect_transform, "get_anchorMax", 0));
+        g_rt_set_anchor_min = make_call(il2cpp::find_method(rect_transform, "set_anchorMin", 1));
+        g_rt_set_anchor_max = make_call(il2cpp::find_method(rect_transform, "set_anchorMax", 1));
+    }
 
     if (Il2CppClass* transform = il2cpp::find_class(kCoreModule, "UnityEngine", "Transform")) {
         g_transform_get_child_count =
@@ -517,6 +577,7 @@ bool resolve() {
     if (Il2CppClass* canvas = il2cpp::find_class(kUiEngineModule, "UnityEngine", "Canvas")) {
         g_canvas_class = canvas;
         g_canvas_is_root = make_call(il2cpp::find_method(canvas, "get_isRootCanvas", 0));
+        g_canvas_get_root = make_call(il2cpp::find_method(canvas, "get_rootCanvas", 0));
         g_canvas_get_scale_factor = make_call(il2cpp::find_method(canvas, "get_scaleFactor", 0));
         g_canvas_set_scale_factor = make_call(il2cpp::find_method(canvas, "set_scaleFactor", 1));
         g_canvas_get_render_mode = make_call(il2cpp::find_method(canvas, "get_renderMode", 0));

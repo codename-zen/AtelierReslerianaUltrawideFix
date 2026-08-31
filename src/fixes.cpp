@@ -8,6 +8,7 @@
 
 #include <safetyhook.hpp>
 
+#include "anchors.hpp"
 #include "config.hpp"
 #include "log.hpp"
 #include "unity_bindings.hpp"
@@ -216,6 +217,24 @@ void dump_scene() {
 // Space - Camera canvas derives its size from its camera's viewport, so
 // narrowing the viewport pulls the whole HUD back into a 16:9 box while the 3D
 // scene keeps the full width.
+// Every live canvas, whatever its render mode, with the root of its chain. The
+// render-mode filter below was hiding exactly the canvases that matter: the
+// menu hierarchy never appeared because its root is not a Screen Space - Camera
+// canvas, so it was skipped before anything could look at it.
+void report_canvas_chain(void* canvas, float band) {
+    static std::unordered_set<void*> reported;
+    if (band > 0.999f || reported.size() > 40 || !reported.insert(canvas).second)
+        return;
+
+    void* root = unity::canvas_root(canvas);
+    const unity::Rect rect = unity::canvas_rect(canvas);
+    void* transform = unity::component_transform(canvas);
+    LOG_INFO("Chain: '{}' mode={} root={} rootCanvas='{}' children={} rect={:.0f}x{:.0f}",
+             unity::object_name(canvas), unity::canvas_render_mode(canvas),
+             unity::canvas_is_root(canvas), root ? unity::object_name(root) : "<none>",
+             unity::transform_child_count(transform), rect.width, rect.height);
+}
+
 // Logs a canvas and the containers directly inside it, once each. If the canvas
 // comes back 16:9 but a child is still as wide as the whole screen, then the
 // game lays its UI out itself and constraining the viewport only crops it.
@@ -360,6 +379,15 @@ void correct_canvas_scale(void* canvas, void* camera) {
     if (current > 0.0f && std::fabs(current - wanted) / wanted < 0.005f)
         return;
 
+    // Only a canvas whose rect actually derives from the viewport can be fixed
+    // by its scale factor. If height x scale does not come back to the viewport
+    // height, the game is sizing this rect itself, and rewriting the scale
+    // factor just corrupts it -- which is what happened to the video player
+    // canvas, reported as 2160 units tall while carrying a scale factor of
+    // 1.3333 that implies 1080.
+    if (current > 0.0f && std::fabs(canvas_height * current - pixel_height) / pixel_height > 0.02f)
+        return;
+
     unity::set_canvas_scale_factor(canvas, wanted);
 
     static int logged = 0;
@@ -414,22 +442,41 @@ void enforce_hud_viewport() {
     float fraction = 1.0f;
     if (screen > g_config.lock_hud_aspect + 0.001f)
         fraction = g_config.lock_hud_aspect / screen;
-    const float left = (1.0f - fraction) * 0.5f;
+
+    // Two ways to reach the same 16:9 HUD, and they are mutually exclusive:
+    // either the camera is narrowed, or the camera stays wide and the HUD's
+    // anchors are pulled in. Narrowing also confines the menu backdrop, which
+    // is what leaves the sides black, so the anchor route trades exactness for
+    // a full-width backdrop.
+    const bool use_anchors = g_config.hud_mode == "anchors";
+    const bool use_viewport = g_config.hud_mode == "viewport";
+
+    const float camera_fraction = use_viewport ? fraction : 1.0f;
+    const float anchor_band = use_anchors ? fraction : 1.0f;
+    const float left = (1.0f - camera_fraction) * 0.5f;
 
     for (void* canvas : unity::find_all_canvases()) {
+        report_canvas_chain(canvas, anchor_band);
+
         if (unity::canvas_render_mode(canvas) != unity::ScreenSpaceCamera)
             continue;
         report_canvas_layout(canvas);
         void* camera = unity::canvas_world_camera(canvas);
-        pin_camera(camera, left, fraction, "canvas");
+        pin_camera(camera, left, camera_fraction, "canvas");
         correct_canvas_scale(canvas, camera);
+
+        // A nested canvas is itself a child of the root, so moving the root's
+        // children should be enough -- unless the chain is sized outright
+        // rather than anchored, which the log will show.
+        if (unity::canvas_is_root(canvas) || g_config.anchor_nested_canvases)
+            anchors::remap(canvas, anchor_band);
     }
 
     // World-space UI, such as the battle HUD, hangs off cameras no canvas
     // points at, so those are matched by name instead.
     for (void* camera : unity::find_all_cameras()) {
         if (is_hud_camera_name(unity::object_name(camera)))
-            pin_camera(camera, left, fraction, "name");
+            pin_camera(camera, left, camera_fraction, "name");
         relax_black_clear(camera);
     }
 }

@@ -108,6 +108,9 @@ int camera_render_type(void* camera);
 Rect canvas_rect(void* canvas);
 float canvas_scale_factor(void* canvas);
 bool canvas_is_root(void* canvas);
+// The canvas at the top of this one's chain, which is the only place a remap
+// can be applied without compounding down the tree.
+void* canvas_root(void* canvas);
 void set_canvas_scale_factor(void* canvas, float value);
 
 // Child traversal, for checking whether a container inside the canvas is still
@@ -116,6 +119,13 @@ void* component_transform(void* component);
 int transform_child_count(void* transform);
 void* transform_child(void* transform, int index);
 Rect transform_rect(void* transform);
+
+// RectTransform anchors. Vector2 is 8 bytes, so the x64 ABI moves it through an
+// integer register rather than XMM, both in and out.
+Vector2 anchor_min(void* rect_transform);
+Vector2 anchor_max(void* rect_transform);
+void set_anchor_min(void* rect_transform, Vector2 value);
+void set_anchor_max(void* rect_transform, Vector2 value);
 
 // Every live instance, including inactive ones. The game's own UI turned out
 // not to use a stock CanvasScaler, so enumeration is the only way to find it.

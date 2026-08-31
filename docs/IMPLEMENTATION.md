@@ -186,7 +186,47 @@ Gameplay is unaffected: `Main Camera` is never pinned, so field and battle fill 
 **Aspect spoofing is off by default.**
 It never fixed the canvas inflation, and it made the options screen report the wrong resolution and the game fight over it.
 
-## 9. Adding another hook
+## 9. The anchor experiment, and why it failed
+
+Narrowing the UI camera confines everything that camera draws, including the
+menu backdrop, which is what leaves the sides of a full-screen menu black.
+The alternative was to keep the camera full width and pull the HUD into a
+centred band by remapping the horizontal anchors of its containers, mapping
+`[0,1]` to `[0.128, 0.872]` at 3440x1440.
+
+Half of it worked: the black sides disappeared, and the backdrop covered the
+whole screen. The HUD never followed.
+
+Three rules were tried, and the reason each failed is the useful part:
+
+- **Direct children of root canvases only.** Too shallow. Two elements moved in
+  the whole game, because the menus sit several levels below a wrapper anchored
+  dead centre.
+- **Every canvas.** Too deep. A nested canvas was moved on top of its
+  already-moved parent, leaving the UI at 0.744 squared and visibly scrambled.
+- **Walk down and remap the topmost spreading node per branch.** Correct in
+  principle, and still only two elements moved.
+
+That last result is what settled it.
+The game does not stretch its menu containers to fit their parent, it assigns
+them a size: a presenter canvas measures 5160x2160 whatever its parent does,
+because 5160 is `2160 x screen aspect`.
+Remapping an ancestor's anchors moves that container's origin and changes
+nothing about its width, so the menu keeps spanning the screen while the
+container around it shrinks -- which shows up as a panel sliding out from under
+its own label.
+
+Anchors are therefore the wrong lever for this game.
+The lever that would work is the same one already used for the scale factor:
+write the container's width directly, setting `sizeDelta.x` to
+`2160 x 1.7778`. That was left undone deliberately, since fighting a size the
+game rewrites every frame is a good deal riskier than the viewport route, which
+already produces an exact 16:9 HUD.
+
+The code is kept behind `Mode = anchors` because the approach is sound for a
+title whose UI is anchor-driven; it is simply not this one.
+
+## 10. Adding another hook
 
 1. Resolve it in `unity::resolve()` with `il2cpp::method_pointer(il2cpp::find_method(klass, "Name", argc))`.
 2. Write a detour matching IL2CPP's convention, remembering the trailing `const MethodInfo*`, and pass structs larger than 8 bytes by pointer.

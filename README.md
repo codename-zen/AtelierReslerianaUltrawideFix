@@ -76,4 +76,6 @@ Verified in game at 3440x1440:
 - Root canvases corrected from `5160x2902` back to their `3840x2160` design size, so UI elements are their intended size.
 - Character portraits render with correct proportions.
 
-Known limitation: full-screen menus have black bars at the sides, because the menu background is a UI element drawn by the camera that has to be narrowed. See [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for the reasoning and for the log lines to check when something looks wrong.
+Known limitation: with the default `Mode = viewport`, in-game full-screen menus have black bars at the sides, because their backdrop is a UI element drawn by the very camera that has to be narrowed.
+`Mode = off` trades the 16:9 HUD lock for a full-width picture with no bars, which is the better deal for some people; element sizes stay corrected either way.
+`Mode = anchors` was an attempt to have both, and it does not work on this game - see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for what it did and why.

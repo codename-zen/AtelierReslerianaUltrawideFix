@@ -43,6 +43,22 @@ struct Config {
     // drawn by an overlay camera, and narrowing only that still shrinks the
     // canvas. Set true to go back to narrowing base cameras too.
     bool pin_base_cameras = false;
+    // "viewport" narrows the UI camera: clean and exact, but a full-screen menu
+    // then has nothing to draw at the sides.
+    // "anchors" leaves the camera full width, so the menu backdrop covers the
+    // whole screen, and pushes the HUD into a centred band by remapping the
+    // horizontal anchors of each canvas's direct children instead.
+    // "off" disables both.
+    std::string hud_mode = "viewport";
+    // Whether nested canvases get their children remapped too. A nested canvas
+    // is itself a child of the root, so in principle moving the root's children
+    // is enough -- but only if the chain is actually anchored rather than sized
+    // outright, which is what this exists to test.
+    bool anchor_nested_canvases = false;
+    // Canvases left full width in anchors mode: the backdrop and blur layers,
+    // which are the whole point of keeping the camera wide.
+    std::string background_canvas_names =
+        "CaptureCanvas,Null_blur,Null_bg,99_cmn_blur_black,FadeCanvas,TransitionCanvas";
     // Relaxes the clear on a full-screen camera that draws nothing. Tried
     // against the black sides of in-game menus and it changed nothing: the
     // game re-applies the clear every frame, and there is no scene rendered
