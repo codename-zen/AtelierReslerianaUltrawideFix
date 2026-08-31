@@ -8,6 +8,7 @@
 
 #include <safetyhook.hpp>
 
+#include "config.hpp"
 #include "fixes.hpp"
 #include "il2cpp_api.hpp"
 #include "log.hpp"
@@ -47,6 +48,11 @@ std::atomic_flag g_init_hook_installed = ATOMIC_FLAG_INIT;
 void setup() {
     if (g_setup_done.exchange(true))
         return;
+
+    if (!g_config.enabled) {
+        LOG_INFO("Disabled by configuration; nothing will be hooked.");
+        return;
+    }
 
     if (!il2cpp::bind()) {
         LOG_ERROR("Could not bind the il2cpp exports; giving up.");

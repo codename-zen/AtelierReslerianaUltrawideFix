@@ -44,6 +44,14 @@ That sidesteps the encryption entirely.
 
 The game folder is typically `C:\Program Files (x86)\Steam\steamapps\common\AtelierReslerianaRW`.
 
+## Turning it off
+
+Set `Enabled = false` under `[General]` in the INI. The plugin still loads but installs nothing, so the game runs exactly as it would without it.
+
+Prefer that over switching off individual sections. `NudgeElements` is calibrated for the widened canvas, so leaving it on while the resolution returns to 16:9 pushes the panel out the other way.
+
+To remove the mod from the game entirely, delete `AtelierReslerianaFix.asi`, `AtelierReslerianaFix.ini` and `version.dll`. Renaming the `.asi` to any other extension also works, since the loader only picks up `*.asi`.
+
 ## Configuration
 
 `AtelierReslerianaFix.ini` is documented inline. What the defaults do:

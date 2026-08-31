@@ -47,6 +47,8 @@ void load_config(const std::filesystem::path& ini_path) {
     inipp::Ini<char> ini;
     ini.parse(stream);
 
+    read(ini, "General", "Enabled", g_config.enabled);
+
     read(ini, "Resolution", "Enabled", g_config.force_resolution);
     read(ini, "Resolution", "Width", g_config.width);
     read(ini, "Resolution", "Height", g_config.height);

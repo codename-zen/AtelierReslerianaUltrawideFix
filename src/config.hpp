@@ -3,6 +3,13 @@
 #include <string>
 
 struct Config {
+    // [General] Master switch. False leaves the plugin loaded but installs
+    // nothing, so the game runs exactly as it would without it. Turning off
+    // individual sections instead is a trap: a NudgeElements offset is
+    // calibrated for the widened canvas, so it misplaces the panel the moment
+    // the resolution goes back to 16:9.
+    bool enabled = true;
+
     // [Resolution] 0x0 means "use the primary monitor's desktop resolution".
     bool force_resolution = true;
     int width = 0;
