@@ -20,6 +20,8 @@ All at 3440x1440, 21:9.
 | Inventory | Party |
 | ![Equipment](docs/screenshots/05-equipment.jpg) | ![Options](docs/screenshots/06-options.jpg) |
 | Equipment | Options |
+| ![Battle](docs/screenshots/08-battle.jpg) | ![Multi-Action](docs/screenshots/09-battle-multi-action.jpg) |
+| Battle | Battle, Multi-Action |
 | ![Sub menu](docs/screenshots/07-submenu.jpg) | |
 | Sub menu | |
 
