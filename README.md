@@ -1,9 +1,68 @@
-# AtelierReslerianaFix
+# AtelierReslerianaUltrawideFix
 
 Ultrawide (21:9 / 32:9) fix for **Atelier Resleriana: The Red Alchemist & the White Guardian** (Steam, AppID 3259600).
 
+The game offers no ultrawide resolution of its own, and forcing one leaves the UI sized wrong.
+This forces the resolution, gives the 3D scene the full screen width, and corrects the UI the game then lays out badly.
+
 Modelled on the structure of Lyall's `AtelierYumiaFix`: a single ASI plugin plus an INI, loaded by Ultimate ASI Loader.
 The engine underneath is completely different from Atelier Yumia's, so the hooking strategy is different - see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
+
+## Installing, without building anything
+
+You do not need Visual Studio or CMake to use this. Three files go into the game folder.
+
+1. Download `AtelierReslerianaUltrawideFix.zip` from [Releases](../../releases). It contains `AtelierReslerianaFix.asi` and `AtelierReslerianaFix.ini`.
+2. Download [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases) (the **x64** build), and rename the DLL inside it to `version.dll`.
+3. Drop all three next to `AtelierReslerianaRW.exe`, normally:
+
+   ```
+   C:\Program Files (x86)\Steam\steamapps\common\AtelierReslerianaRW
+   ```
+
+4. Launch the game. It should come up at your monitor's full width.
+
+`winmm.dll` and `winhttp.dll` work as loader names too - all three are imported by `UnityPlayer.dll`, confirmed with `dumpbin /imports`.
+Do **not** use `dinput8.dll`: this game never loads it, which is the one place Lyall's Atelier Yumia setup does not carry over.
+
+To check it is running, open `AtelierReslerianaFix.log` in the game folder. It should end with `Hooks installed.`
+
+## Turning it off
+
+Set `Enabled = false` under `[General]` in the INI, and restart the game. The plugin still loads but installs nothing, so the game runs exactly as it would without it.
+
+Prefer that over switching off individual sections. `NudgeElements` is calibrated for the widened canvas, so leaving it on while the resolution returns to 16:9 pushes a menu panel out the other way.
+
+To remove it entirely, delete `AtelierReslerianaFix.asi`, `AtelierReslerianaFix.ini` and `version.dll`. Renaming the `.asi` to any other extension also works, since the loader only picks up `*.asi`.
+
+## Configuration
+
+Everything is in `AtelierReslerianaFix.ini`, which is documented inline and read once at startup, so a restart applies changes. No rebuild is ever needed to change behaviour.
+
+The settings worth knowing:
+
+| Key | Default | What it does |
+| --- | --- | --- |
+| `[General] Enabled` | `true` | Master switch |
+| `[Resolution] Enabled` | `true` | Forces a resolution the game's own list omits. `Width`/`Height` of `0` means the desktop resolution |
+| `[Resolution] FullscreenMode` | `1` | 0 exclusive, 1 borderless, 2 maximised, 3 windowed |
+| `[HUD] Mode` | `off` | `off` for a full-width picture, `viewport` to lock the HUD to 16:9 at the cost of black bars in full-screen menus |
+| `[HUD] NudgeElements` | `Image_win:-660` | Shifts the description panel back under its own labels. Calibrated for `Mode = off` |
+| `[AspectRatio] CorrectRenderTextureAspect` | `true` | Stops the Party screen's live character coming out 26 percent narrow |
+| `[FOV] AdditionalVerticalFOV` | `0.0` | Extra vertical FOV, if you want a wider view than Hor+ already gives |
+
+## Tested on
+
+| | |
+| --- | --- |
+| Game | Atelier Resleriana: The Red Alchemist & the White Guardian, Steam, **ver. 1.3.2** |
+| Engine | Unity 2022.3.56f1, IL2CPP, URP, Direct3D 11 |
+| Display | **3440x1440 (21:9) at 165 Hz**, borderless, alongside a secondary 1920x1080 |
+| GPU | AMD Radeon RX 9070 XT, driver 32.0.31041.1004 |
+| CPU | AMD Ryzen 7 9700X |
+| OS | Windows 11 Pro 24H2 (10.0.26200) |
+
+Only 21:9 at 3440x1440 has actually been played. 32:9 should follow the same maths, since every correction is derived from the screen aspect rather than hard-coded, but it is untested - the one value likely to need retuning is `NudgeElements`, whose offset is half of how far the canvas grows.
 
 ## What the game actually is
 
@@ -34,38 +93,24 @@ The il2cpp runtime decrypts the names in memory during startup - the player log 
 So this fix resolves every class, method and field **by name, at runtime, through those exports**, and never reads the metadata file.
 That sidesteps the encryption entirely.
 
-## Install
+## What works
 
-1. Download [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases) (x64) and put its `winmm.dll` next to `AtelierReslerianaRW.exe`.
-   `version.dll` and `winhttp.dll` also work - all three are imported by `UnityPlayer.dll`, confirmed with `dumpbin /imports`.
-   Do **not** use `dinput8.dll`: this game never loads it, which is the one place Lyall's Atelier Yumia setup does not carry over.
-2. Copy `AtelierReslerianaFix.asi` and `AtelierReslerianaFix.ini` into the same folder.
-3. Launch the game and check `AtelierReslerianaFix.log` in that folder.
+Verified in game at 3440x1440:
 
-The game folder is typically `C:\Program Files (x86)\Steam\steamapps\common\AtelierReslerianaRW`.
+- Resolution forced to the full ultrawide, applied once and holding.
+- 3D scene fills the whole screen in field and battle, and on the title screen.
+- Root canvases corrected from `5160x2902` back to their `3840x2160` design size, so UI elements are their intended size rather than 26 percent small.
+- The description panel sits under its own labels in Inventory, Equipment and Exploration Equipment.
+- The Party screen's live 3D character has correct proportions.
 
-## Turning it off
+The default `Mode = off` gives a full-width picture with no black bars and no HUD lock. It is the configuration verified end to end.
 
-Set `Enabled = false` under `[General]` in the INI. The plugin still loads but installs nothing, so the game runs exactly as it would without it.
+`Mode = viewport` is the alternative, and the only mode that truly locks the HUD to 16:9. Its cost is that in-game full-screen menus get black bars at the sides, because their backdrop is a UI element drawn by the very camera that has to be narrowed. Switching to it means clearing `NudgeElements`.
+`Mode = anchors` was an attempt to have both, and it does not work on this game - see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for what it did and why.
 
-Prefer that over switching off individual sections. `NudgeElements` is calibrated for the widened canvas, so leaving it on while the resolution returns to 16:9 pushes the panel out the other way.
+## Building from source
 
-To remove the mod from the game entirely, delete `AtelierReslerianaFix.asi`, `AtelierReslerianaFix.ini` and `version.dll`. Renaming the `.asi` to any other extension also works, since the loader only picks up `*.asi`.
-
-## Configuration
-
-`AtelierReslerianaFix.ini` is documented inline. What the defaults do:
-
-- Force the primary monitor's desktop resolution in borderless mode, because the game's own options list omits ultrawide modes. Set `Resolution.Enabled = false` to keep the game's own choice.
-- Pin the UI cameras to a centred 16:9 band so the HUD keeps its 16:9 layout, and never pin the cameras named in `SceneCameraNames`, so the 3D view keeps the full width.
-- Correct the canvas scale, because the game sizes its UI reference as `2160 x screen aspect` and so inflates every root canvas by `screenAspect / 16:9` on an ultrawide screen.
-- Leave FOV alone, since Unity's vertical-FOV projection is already Hor+.
-- Leave aspect spoofing off: it did not fix the inflation and it made the options screen misreport the resolution.
-
-## Build
-
-Requires CMake 3.25+ and MSVC with a C++23 toolset.
-safetyhook, spdlog and inipp are fetched automatically.
+Only needed if you want to change the code. Requires CMake 3.25+ and MSVC with a C++23 toolset; safetyhook, spdlog and inipp are fetched automatically.
 
 ```
 cmake -S . -B build -G "Visual Studio 18 2026" -A x64
@@ -73,18 +118,3 @@ cmake --build build --config Release
 ```
 
 Output: `build/Release/AtelierReslerianaFix.asi`.
-
-## Status
-
-Verified in game at 3440x1440:
-
-- Resolution forced to the full ultrawide, applied once and holding.
-- 3D scene fills the whole screen in field and battle.
-- HUD locked to a centred 16:9 band, measured at 440..2999 of 3439 px, matching a native 16:9 reference capture exactly.
-- Root canvases corrected from `5160x2902` back to their `3840x2160` design size, so UI elements are their intended size.
-- Character portraits render with correct proportions.
-
-The default is `Mode = off`: no HUD lock, a full-width picture with no black bars, and element sizes still corrected. It is the configuration verified end to end, and the one `NudgeElements` is calibrated for.
-
-`Mode = viewport` is the alternative, and the only mode that truly locks the HUD to 16:9. Its cost is that in-game full-screen menus get black bars at the sides, because their backdrop is a UI element drawn by the very camera that has to be narrowed. Switching to it means clearing `NudgeElements`, whose offset is derived from the wider canvas that `off` produces.
-`Mode = anchors` was an attempt to have both, and it does not work on this game - see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for what it did and why.
