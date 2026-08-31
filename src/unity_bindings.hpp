@@ -126,6 +126,8 @@ Vector2 anchor_min(void* rect_transform);
 Vector2 anchor_max(void* rect_transform);
 void set_anchor_min(void* rect_transform, Vector2 value);
 void set_anchor_max(void* rect_transform, Vector2 value);
+Vector2 anchored_position(void* rect_transform);
+void set_anchored_position(void* rect_transform, Vector2 value);
 
 // Every live instance, including inactive ones. The game's own UI turned out
 // not to use a stock CanvasScaler, so enumeration is the only way to find it.

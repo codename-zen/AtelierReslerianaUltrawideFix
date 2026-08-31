@@ -10,6 +10,7 @@
 
 #include "anchors.hpp"
 #include "config.hpp"
+#include "elements.hpp"
 #include "log.hpp"
 #include "unity_bindings.hpp"
 
@@ -208,6 +209,13 @@ void dump_scene() {
                  unity::camera_clear_flags(camera), unity::camera_depth(camera),
                  static_cast<unsigned>(unity::camera_culling_mask(camera)), rt_width, rt_height,
                  unity::camera_render_type(camera));
+    }
+
+    LOG_INFO("-- element tree of each root canvas --");
+    for (void* canvas : unity::find_all_canvases()) {
+        if (unity::canvas_render_mode(canvas) == unity::ScreenSpaceCamera &&
+            unity::canvas_is_root(canvas))
+            elements::dump(canvas);
     }
 
     LOG_INFO("==== end of dump ====");
@@ -451,6 +459,15 @@ void enforce_hud_viewport() {
     const bool use_anchors = g_config.hud_mode == "anchors";
     const bool use_viewport = g_config.hud_mode == "viewport";
 
+    static ULONGLONG last_nudge_pass = 0;
+    const ULONGLONG now = GetTickCount64();
+    // A quarter second, not a whole one: at one second the panel visibly jumped
+    // into place after a menu opened. The walk can afford it now that it stops
+    // as soon as every entry is placed.
+    const bool nudge_due = now - last_nudge_pass >= 250;
+    if (nudge_due)
+        last_nudge_pass = now;
+
     const float camera_fraction = use_viewport ? fraction : 1.0f;
     const float anchor_band = use_anchors ? fraction : 1.0f;
     const float left = (1.0f - camera_fraction) * 0.5f;
@@ -470,6 +487,11 @@ void enforce_hud_viewport() {
         // rather than anchored, which the log will show.
         if (unity::canvas_is_root(canvas) || g_config.anchor_nested_canvases)
             anchors::remap(canvas, anchor_band);
+
+        // Independent of the HUD mode: these correct the game's own layout,
+        // not ours, so they apply even with the lock off.
+        if (nudge_due && unity::canvas_is_root(canvas))
+            elements::apply_nudges(canvas);
     }
 
     // World-space UI, such as the battle HUD, hangs off cameras no canvas

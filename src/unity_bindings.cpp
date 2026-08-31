@@ -51,6 +51,8 @@ Call g_rt_get_anchor_min;
 Call g_rt_get_anchor_max;
 Call g_rt_set_anchor_min;
 Call g_rt_set_anchor_max;
+Call g_rt_get_anchored_position;
+Call g_rt_set_anchored_position;
 
 // A Vector2 travels in an integer register on this ABI, so it is moved as raw
 // bits rather than cast, which would go through the wrong register class.
@@ -400,6 +402,14 @@ void set_anchor_max(void* rect_transform, Vector2 value) {
     set_vector2(g_rt_set_anchor_max, rect_transform, value);
 }
 
+Vector2 anchored_position(void* rect_transform) {
+    return get_vector2(g_rt_get_anchored_position, rect_transform);
+}
+
+void set_anchored_position(void* rect_transform, Vector2 value) {
+    set_vector2(g_rt_set_anchored_position, rect_transform, value);
+}
+
 Rect transform_rect(void* transform) {
     Rect rect{0.0f, 0.0f, 0.0f, 0.0f};
     if (!g_rect_transform_get_rect || !transform)
@@ -563,6 +573,10 @@ bool resolve() {
         g_rt_get_anchor_max = make_call(il2cpp::find_method(rect_transform, "get_anchorMax", 0));
         g_rt_set_anchor_min = make_call(il2cpp::find_method(rect_transform, "set_anchorMin", 1));
         g_rt_set_anchor_max = make_call(il2cpp::find_method(rect_transform, "set_anchorMax", 1));
+        g_rt_get_anchored_position =
+            make_call(il2cpp::find_method(rect_transform, "get_anchoredPosition", 0));
+        g_rt_set_anchored_position =
+            make_call(il2cpp::find_method(rect_transform, "set_anchoredPosition", 1));
     }
 
     if (Il2CppClass* transform = il2cpp::find_class(kCoreModule, "UnityEngine", "Transform")) {

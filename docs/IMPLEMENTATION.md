@@ -226,7 +226,29 @@ already produces an exact 16:9 HUD.
 The code is kept behind `Mode = anchors` because the approach is sound for a
 title whose UI is anchor-driven; it is simply not this one.
 
-## 10. Adding another hook
+## 10. Per-element nudges
+
+Some layout is wrong at a wide aspect before this fix touches anything.
+The Inventory description panel is the clear case: `Image_win`, 3544x756, anchored dead centre, while the label column beside it is pinned left.
+At 16:9 the canvas is 3840 units and the panel spans 148..3692, so the labels sit on it.
+At 21:9 the canvas is 5160 and the same centred panel spans 819..4363, pulling 660 units clear of its own labels.
+
+That 660 is half the canvas growth, `(5160 - 3840) / 2`, and it is the whole fix: `NudgeElements = Image_win:-660`.
+
+It was verified as the game's own behaviour, not this fix's, before anything was written.
+With `Mode = off` and `LockAspect = 0` the log recorded zero anchor changes, zero pinned cameras and zero scale corrections, and the panel still sat in exactly the same wrong place.
+
+Two things the walk needed, both found the slow way:
+
+- **Not every Transform is a RectTransform.**
+  `GetChild` returns plain Transforms for particle effects, and reading anchors off one produced a width of -1.48e30 in a dump. They are stepped over now, and their children still visited.
+- **Depth costs budget.**
+  The panel sits behind several hundred item icons, so a 600 node walk never reached it while the 6000 node dump did. The walk now stops as soon as every entry is placed, which keeps a 250 ms cadence affordable; at one second the panel visibly jumped into place after a menu opened.
+
+Matching is by substring, so clone suffixes do not matter -- and neither does specificity, which is the catch.
+`Image_win` is a generic name, so every panel using it moves. That is right where the same displacement applies and wrong where a panel is meant to stay centred, so a new nudge is worth checking across a few screens.
+
+## 11. Adding another hook
 
 1. Resolve it in `unity::resolve()` with `il2cpp::method_pointer(il2cpp::find_method(klass, "Name", argc))`.
 2. Write a detour matching IL2CPP's convention, remembering the trailing `const MethodInfo*`, and pass structs larger than 8 bytes by pointer.

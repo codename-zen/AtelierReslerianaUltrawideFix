@@ -108,6 +108,13 @@ void walk(void* transform, float band, float pad, int depth, int& budget) {
             continue;
         --budget;
 
+        // Not every Transform in the tree is a RectTransform; effects and
+        // plain roots are not, and reading anchors off those returns garbage.
+        if (unity::type_name(child) != "RectTransform") {
+            walk(child, band, pad, depth + 1, budget);
+            continue;
+        }
+
         const std::string name = unity::object_name(child);
         if (is_background(name)) {
             report_child(child, 0.0f, 0.0f, "background", band);

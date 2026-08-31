@@ -55,6 +55,10 @@ struct Config {
     // is enough -- but only if the chain is actually anchored rather than sized
     // outright, which is what this exists to test.
     bool anchor_nested_canvases = false;
+    // Per-element horizontal nudges, as "Name:offset" entries in canvas units.
+    // For layout the game itself gets wrong at a wide aspect, where a general
+    // rule would do more harm than a targeted shift.
+    std::string nudge_elements;
     // Canvases left full width in anchors mode: the backdrop and blur layers,
     // which are the whole point of keeping the camera wide.
     std::string background_canvas_names =

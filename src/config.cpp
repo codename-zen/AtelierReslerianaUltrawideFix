@@ -66,6 +66,7 @@ void load_config(const std::filesystem::path& ini_path) {
     read(ini, "HUD", "PinBaseCameras", g_config.pin_base_cameras);
     read(ini, "HUD", "Mode", g_config.hud_mode);
     read(ini, "HUD", "AnchorNestedCanvases", g_config.anchor_nested_canvases);
+    read(ini, "HUD", "NudgeElements", g_config.nudge_elements);
     read(ini, "HUD", "BackgroundCanvases", g_config.background_canvas_names);
     read(ini, "HUD", "RelaxBlackClear", g_config.relax_black_clear);
 
