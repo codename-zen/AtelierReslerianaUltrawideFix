@@ -32,8 +32,8 @@ All at 3440x1440, 21:9.
 | Battle | Battle, Multi-Action |
 | ![Synthesis](docs/screenshots/11-synthesis.jpg) | ![Town Management](docs/screenshots/10-town-management.jpg) |
 | Synthesis | Town Management |
-| ![Sub menu](docs/screenshots/07-submenu.jpg) | |
-| Sub menu | |
+| ![Recipe Tree](docs/screenshots/12-recipe-tree.jpg) | ![Sub menu](docs/screenshots/07-submenu.jpg) |
+| Recipe Tree | Sub menu |
 
 Shots live in `docs/screenshots/`, resized to 1720px wide and saved as JPEG so the repository stays light; drop replacements in under the same names to refresh this section.
 
