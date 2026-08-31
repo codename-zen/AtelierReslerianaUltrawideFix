@@ -28,6 +28,10 @@ constexpr size_t kMaxTracked = 4096;
 struct Nudge {
     std::string name;
     float offset = 0.0f;
+    // Optional expected width, from "Name@width:offset". A name alone is not
+    // always enough: Image_win identifies the Inventory description panel and
+    // also a Synthesis panel that needs nothing done to it.
+    float width = 0.0f;
 };
 
 struct Applied {
@@ -131,7 +135,19 @@ std::vector<Nudge> parse_nudges(const std::string& list) {
             const size_t last = entry.find_last_not_of(" \t", colon > 0 ? colon - 1 : 0);
             if (first != std::string::npos && last != std::string::npos && first <= last) {
                 Nudge nudge;
-                nudge.name = entry.substr(first, last - first + 1);
+                std::string target = entry.substr(first, last - first + 1);
+
+                const size_t at = target.rfind('@');
+                if (at != std::string::npos) {
+                    try {
+                        nudge.width = std::stof(target.substr(at + 1));
+                        target = target.substr(0, at);
+                    } catch (const std::exception&) {
+                        LOG_WARN("Could not read a nudge width from '{}'", entry);
+                    }
+                }
+                nudge.name = target;
+
                 try {
                     nudge.offset = std::stof(entry.substr(colon + 1));
                     if (!nudge.name.empty())
@@ -193,6 +209,17 @@ void walk(void* transform, int depth, int& budget, bool logging,
 
         for (const Nudge& nudge : nudges) {
             if (!matches_element(name, nudge.name))
+                continue;
+
+            // A nudge shifts a fixed-size element. One that stretches with its
+            // parent has no fixed position to shift, so moving it only detaches
+            // it from its own contents -- which is what happened to the
+            // Synthesis panel, an Image_win anchored 0..1 that this had no
+            // business touching.
+            if (std::fabs(unity::anchor_max(child).x - unity::anchor_min(child).x) > 0.001f)
+                continue;
+
+            if (nudge.width > 0.0f && std::fabs(rect.width - nudge.width) / nudge.width > 0.02f)
                 continue;
 
             unity::Vector2 position = unity::anchored_position(child);

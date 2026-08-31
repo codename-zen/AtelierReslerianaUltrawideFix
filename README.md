@@ -22,8 +22,10 @@ All at 3440x1440, 21:9.
 | Equipment | Options |
 | ![Battle](docs/screenshots/08-battle.jpg) | ![Multi-Action](docs/screenshots/09-battle-multi-action.jpg) |
 | Battle | Battle, Multi-Action |
-| ![Sub menu](docs/screenshots/07-submenu.jpg) | ![Town Management](docs/screenshots/10-town-management.jpg) |
-| Sub menu | Town Management |
+| ![Synthesis](docs/screenshots/11-synthesis.jpg) | ![Town Management](docs/screenshots/10-town-management.jpg) |
+| Synthesis | Town Management |
+| ![Sub menu](docs/screenshots/07-submenu.jpg) | |
+| Sub menu | |
 
 Shots live in `docs/screenshots/`, resized to 1720px wide and saved as JPEG so the repository stays light; drop replacements in under the same names to refresh this section.
 
