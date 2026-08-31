@@ -8,6 +8,23 @@ This forces the resolution, gives the 3D scene the full screen width, and correc
 Modelled on the structure of Lyall's `AtelierYumiaFix`: a single ASI plugin plus an INI, loaded by Ultimate ASI Loader.
 The engine underneath is completely different from Atelier Yumia's, so the hooking strategy is different - see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
 
+## Preview
+
+All at 3440x1440, 21:9.
+
+| | |
+| --- | --- |
+| ![Dialogue](docs/screenshots/01-dialogue.jpg) | ![Town](docs/screenshots/02-town.jpg) |
+| Dialogue | Field and town |
+| ![Inventory](docs/screenshots/03-inventory.jpg) | ![Party](docs/screenshots/04-party.jpg) |
+| Inventory | Party |
+| ![Equipment](docs/screenshots/05-equipment.jpg) | ![Options](docs/screenshots/06-options.jpg) |
+| Equipment | Options |
+| ![Sub menu](docs/screenshots/07-submenu.jpg) | |
+| Sub menu | |
+
+Shots live in `docs/screenshots/`, resized to 1720px wide and saved as JPEG so the repository stays light; drop replacements in under the same names to refresh this section.
+
 ## Installing
 
 Download `AtelierReslerianaUltrawideFix.zip` from [Releases](../../releases) and extract it into the game folder, normally:
