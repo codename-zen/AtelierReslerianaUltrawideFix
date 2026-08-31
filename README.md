@@ -124,8 +124,12 @@ pwsh -File scripts/package.ps1
 
 The last step assembles the release archive, pulling the loader and its licence straight from upstream so the bundle is reproducible rather than hand-assembled.
 
+## Licence
+
+MIT, see [LICENSE](LICENSE).
+
 ## Credits
 
-[Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) by ThirteenAG, redistributed in the release archive under the MIT licence, unmodified apart from its filename.
+[Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) by ThirteenAG, also MIT, redistributed in the release archive unmodified apart from its filename. Its licence travels in `licenses/` inside the archive.
 
 Structure modelled on Lyall's `AtelierYumiaFix`, though the engine underneath is a different one and none of the hooking carries over.

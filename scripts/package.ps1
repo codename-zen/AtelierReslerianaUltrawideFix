@@ -1,8 +1,9 @@
 # Builds the release bundle: everything a player needs, extracted straight into
 # the game folder, with no build tools and nothing else to download.
 #
-# Ultimate ASI Loader is redistributed here under its MIT licence, whose text is
-# fetched from its repository and shipped alongside rather than summarised.
+# Both this project and Ultimate ASI Loader are MIT, and both licences ship in
+# licenses/ inside the archive. The loader's text is fetched from its repository
+# rather than summarised or copied by hand.
 #
 #   pwsh -File scripts/package.ps1
 #
@@ -52,6 +53,8 @@ Ultimate-ASI-Loader-LICENSE.txt.
 
 Source: https://github.com/ThirteenAG/Ultimate-ASI-Loader
 '@ | Set-Content -Path (Join-Path $licenceDir 'README.txt') -Encoding utf8
+
+Copy-Item (Join-Path $root 'LICENSE') (Join-Path $licenceDir 'AtelierReslerianaUltrawideFix-LICENSE.txt')
 
 $zip = Join-Path $dist 'AtelierReslerianaUltrawideFix.zip'
 Remove-Item $zip -Force -ErrorAction SilentlyContinue
