@@ -8,24 +8,28 @@ This forces the resolution, gives the 3D scene the full screen width, and correc
 Modelled on the structure of Lyall's `AtelierYumiaFix`: a single ASI plugin plus an INI, loaded by Ultimate ASI Loader.
 The engine underneath is completely different from Atelier Yumia's, so the hooking strategy is different - see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
 
-## Installing, without building anything
+## Installing
 
-You do not need Visual Studio or CMake to use this. Three files go into the game folder.
+Download `AtelierReslerianaUltrawideFix.zip` from [Releases](../../releases) and extract it into the game folder, normally:
 
-1. Download `AtelierReslerianaUltrawideFix.zip` from [Releases](../../releases). It contains `AtelierReslerianaFix.asi` and `AtelierReslerianaFix.ini`.
-2. Download [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases) (the **x64** build), and rename the DLL inside it to `version.dll`.
-3. Drop all three next to `AtelierReslerianaRW.exe`, normally:
+```
+C:\Program Files (x86)\Steam\steamapps\common\AtelierReslerianaRW
+```
 
-   ```
-   C:\Program Files (x86)\Steam\steamapps\common\AtelierReslerianaRW
-   ```
+That is the whole install. Launch the game and it should come up at your monitor's full width.
 
-4. Launch the game. It should come up at your monitor's full width.
+No build tools, and nothing else to download: the archive already contains the loader.
 
-`winmm.dll` and `winhttp.dll` work as loader names too - all three are imported by `UnityPlayer.dll`, confirmed with `dumpbin /imports`.
-Do **not** use `dinput8.dll`: this game never loads it, which is the one place Lyall's Atelier Yumia setup does not carry over.
+```
+AtelierReslerianaFix.asi     the fix
+AtelierReslerianaFix.ini     settings, read at startup
+version.dll                  Ultimate ASI Loader, which loads the .asi
+licenses/                    the loader's MIT licence
+```
 
 To check it is running, open `AtelierReslerianaFix.log` in the game folder. It should end with `Hooks installed.`
+
+The loader has to carry a name `UnityPlayer.dll` actually imports. `version.dll` is what ships here; `winmm.dll` and `winhttp.dll` work too, all three confirmed with `dumpbin /imports`. `dinput8.dll` does **not**: this game never loads it, which is the one place Lyall's Atelier Yumia setup does not carry over.
 
 ## Turning it off
 
@@ -115,6 +119,13 @@ Only needed if you want to change the code. Requires CMake 3.25+ and MSVC with a
 ```
 cmake -S . -B build -G "Visual Studio 18 2026" -A x64
 cmake --build build --config Release
+pwsh -File scripts/package.ps1
 ```
 
-Output: `build/Release/AtelierReslerianaFix.asi`.
+The last step assembles the release archive, pulling the loader and its licence straight from upstream so the bundle is reproducible rather than hand-assembled.
+
+## Credits
+
+[Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) by ThirteenAG, redistributed in the release archive under the MIT licence, unmodified apart from its filename.
+
+Structure modelled on Lyall's `AtelierYumiaFix`, though the engine underneath is a different one and none of the hooking carries over.

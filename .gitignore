@@ -2,6 +2,9 @@
 build/
 out/
 
+# Release archive assembled by scripts/package.ps1
+dist/
+
 # Visual Studio
 .vs/
 *.user
