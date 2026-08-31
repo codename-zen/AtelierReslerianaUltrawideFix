@@ -71,6 +71,11 @@ struct Config {
     // For layout the game itself gets wrong at a wide aspect, where a general
     // rule would do more harm than a targeted shift.
     std::string nudge_elements;
+    // Named containers that stretch across the canvas and are re-anchored into
+    // the LockAspect band. Their edge-anchored children come in with them,
+    // while centred children stay put. This is the counterpart to a nudge: a
+    // nudge moves a fixed-size element, this narrows a stretching one.
+    std::string constrain_elements;
     // Canvases left full width in anchors mode: the backdrop and blur layers,
     // which are the whole point of keeping the camera wide.
     std::string background_canvas_names =

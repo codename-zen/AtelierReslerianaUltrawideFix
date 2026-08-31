@@ -13,6 +13,6 @@ void dump(void* canvas);
 // it away from the label column beside it -- which happens with the mod doing
 // nothing at all, verified with every adjustment disabled. A general rule would
 // do more harm than a targeted shift, so the shift is named and opt-in.
-void apply_nudges(void* canvas);
+void apply_nudges(void* canvas, float band);
 
 } // namespace elements

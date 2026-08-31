@@ -285,7 +285,17 @@ This was learned by clobbering it. Deploying the repository's INI over the one i
 Matching is by substring, so clone suffixes do not matter -- and neither does specificity, which is the catch.
 `Image_win` is a generic name, so every panel using it moves. That is right where the same displacement applies and wrong where a panel is meant to stay centred, so a new nudge is worth checking across a few screens.
 
-## 12. Adding another hook
+## 12. The plugin loads in more than one process
+
+`UnityCrashHandler64.exe` sits in the same folder and imports `VERSION.dll` too, so the loader picks this plugin up there as well.
+
+That process has no `GameAssembly.dll` and never will, so the copy running in it span for the full sixty second timeout and then wrote `GameAssembly.dll never appeared; nothing was hooked` into the same log file the game was writing to. It read like a failure in the game's own copy, and survived one attempt to fix it in the bootstrap loop -- naturally, since `g_setup_done` in that process was genuinely false the whole time. Different process, different memory.
+
+The check is now the first thing `initialise` does, before the log is even opened, so the wrong process never touches the file at all. Anything other than `AtelierReslerianaRW.exe` returns immediately.
+
+Worth remembering when reading a log that contradicts itself: two processes can be writing to it.
+
+## 13. Adding another hook
 
 1. Resolve it in `unity::resolve()` with `il2cpp::method_pointer(il2cpp::find_method(klass, "Name", argc))`.
 2. Write a detour matching IL2CPP's convention, remembering the trailing `const MethodInfo*`, and pass structs larger than 8 bytes by pointer.

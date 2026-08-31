@@ -526,7 +526,7 @@ void enforce_hud_viewport() {
         // Independent of the HUD mode: these correct the game's own layout,
         // not ours, so they apply even with the lock off.
         if (nudge_due && unity::canvas_is_root(canvas))
-            elements::apply_nudges(canvas);
+            elements::apply_nudges(canvas, fraction);
     }
 
     // World-space UI, such as the battle HUD, hangs off cameras no canvas

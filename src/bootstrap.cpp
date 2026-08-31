@@ -200,12 +200,13 @@ void install() {
     // domain appears part-way through il2cpp_init, while the garbage collector
     // is still coming up, so treating it as "ready" and attaching this thread
     // is what produces "Fatal error in GC: Collecting from unknown thread".
-    bool init_hooked = false;
+    // Installing the hook is the whole job: the detour runs the setup when the
+    // game calls il2cpp_init. Polling on past that point spun for the full
+    // timeout and then logged that nothing had been hooked, ninety seconds
+    // after the hooks were demonstrably in place.
     for (int waited = 0; waited < kSetupTimeoutMs; waited += kPollIntervalMs) {
-        if (g_setup_done)
+        if (g_setup_done || hook_il2cpp_init())
             return;
-        if (!init_hooked)
-            init_hooked = hook_il2cpp_init();
         Sleep(kPollIntervalMs);
     }
 
@@ -220,8 +221,7 @@ void install() {
         return;
     }
 
-    if (!g_setup_done)
-        LOG_ERROR("GameAssembly.dll never appeared; nothing was hooked.");
+    LOG_ERROR("GameAssembly.dll never appeared; nothing was hooked.");
 }
 
 } // namespace bootstrap
