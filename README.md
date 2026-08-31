@@ -8,6 +8,14 @@ This forces the resolution, gives the 3D scene the full screen width, and correc
 Modelled on the structure of Lyall's `AtelierYumiaFix`: a single ASI plugin plus an INI, loaded by Ultimate ASI Loader.
 The engine underneath is completely different from Atelier Yumia's, so the hooking strategy is different - see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
 
+## Commissions
+
+This fix was built as a commission.
+
+If you want an ultrawide fix for another game, get in touch: **ganysigit1@gmail.com**
+
+Bring the game and the resolution you want it at. What that involves varies a lot by engine, and it is not always a matter of forcing a resolution - this one needed the UI corrected screen by screen afterwards, which is what most of the work here actually was.
+
 ## Preview
 
 All at 3440x1440, 21:9.
