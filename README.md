@@ -106,7 +106,7 @@ Verified in game at 3440x1440:
 - Root canvases corrected from `5160x2902` back to their `3840x2160` design size, so UI elements are their intended size rather than 26 percent small.
 - The description panel sits under its own labels in Inventory, Equipment and Exploration Equipment.
 - The Party screen's live 3D character has correct proportions.
-- The shop results sequence - Sales Results, Shop Rank, Town Status - keeps its level bars and pentagon chart on screen.
+- The shop screens hold together: the results sequence keeps its level bars and pentagon chart on screen, the Shop Management button keeps its own icon, and Shop Overview keeps the rank panel beside the task list.
 
 The default `Mode = off` gives a full-width picture with no black bars and no HUD lock. It is the configuration verified end to end.
 
