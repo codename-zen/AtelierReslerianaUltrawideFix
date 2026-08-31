@@ -100,6 +100,9 @@ void set_camera_clear_flags(void* camera, int flags);
 float camera_depth(void* camera);
 int camera_culling_mask(void* camera);
 bool behaviour_enabled(void* behaviour);
+// Whether a component's GameObject is live in the scene. Menus the game is not
+// showing stay instantiated but inactive, so this is what keeps a walk off them.
+bool game_object_active(void* component);
 // URP CameraRenderType: 0 Base, 1 Overlay. -1 when unavailable. An overlay
 // renders into its base camera's viewport and ignores its own.
 int camera_render_type(void* camera);

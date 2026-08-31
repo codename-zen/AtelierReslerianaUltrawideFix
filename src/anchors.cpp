@@ -108,6 +108,11 @@ void walk(void* transform, float band, float pad, int depth, int& budget) {
             continue;
         --budget;
 
+        // Menus the game is not showing stay instantiated but inactive, and
+        // walking them wastes the budget on things nobody can see.
+        if (!unity::game_object_active(child))
+            continue;
+
         // Not every Transform in the tree is a RectTransform; effects and
         // plain roots are not, and reading anchors off those returns garbage.
         if (unity::type_name(child) != "RectTransform") {

@@ -17,9 +17,8 @@ constexpr int kMaxDepth = 12;
 // menu; the nudge pass runs every 250 ms and stays cheap.
 constexpr int kMaxDumpNodes = 6000;
 // The Inventory alone puts hundreds of item icons between the canvas root and
-// the panel worth moving, and 600 ran out long before reaching it. The walk
-// stops as soon as every entry has been placed, so the full budget is only
-// spent when something is genuinely missing.
+// the panel worth moving, and 600 ran out long before reaching it. Inactive
+// branches are skipped, which is what keeps a walk this deep cheap.
 constexpr int kMaxNudgeNodes = 5000;
 // Only containers are worth printing. Every icon and glyph in the tree would
 // bury the panel being looked for.
@@ -90,6 +89,13 @@ void walk(void* transform, int depth, int& budget, bool logging,
             continue;
         --budget;
 
+        // The game keeps every menu instantiated and switches them on and off,
+        // so most of the tree is invisible. Skipping the inactive branches is
+        // what makes a deep walk affordable, and it keeps the pass on the menu
+        // actually on screen.
+        if (!unity::game_object_active(child))
+            continue;
+
         if (!is_rect_transform(child)) {
             walk(child, depth + 1, budget, logging, nudges, matched);
             continue;
@@ -137,14 +143,6 @@ void walk(void* transform, int depth, int& budget, bool logging,
             }
             ++matched;
             break;
-        }
-
-        // Every entry accounted for, so the rest of the tree cannot matter.
-        // The panel sits well before the end of the Inventory's icon list, and
-        // walking the remainder was most of the cost.
-        if (!nudges.empty() && matched >= nudges.size()) {
-            budget = 0;
-            return;
         }
 
         walk(child, depth + 1, budget, logging, nudges, matched);

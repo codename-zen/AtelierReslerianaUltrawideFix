@@ -98,6 +98,8 @@ Call g_camera_set_clear_flags;
 Call g_camera_get_depth;
 Call g_camera_get_culling_mask;
 Call g_behaviour_get_enabled;
+Call g_component_get_game_object;
+Call g_game_object_active_in_hierarchy;
 Call g_component_get_component;
 Call g_urp_get_render_type;
 Il2CppClass* g_urp_camera_data_class = nullptr;
@@ -316,6 +318,19 @@ float camera_depth(void* camera) {
         camera, g_camera_get_depth.info);
 }
 
+bool game_object_active(void* component) {
+    if (!g_component_get_game_object || !g_game_object_active_in_hierarchy || !component)
+        return true; // Unknown means do not exclude.
+
+    void* game_object = reinterpret_cast<Il2CppObject* (*)(void*, const MethodInfo*)>(
+        g_component_get_game_object.ptr)(component, g_component_get_game_object.info);
+    if (!game_object)
+        return true;
+
+    return reinterpret_cast<bool (*)(void*, const MethodInfo*)>(
+        g_game_object_active_in_hierarchy.ptr)(game_object, g_game_object_active_in_hierarchy.info);
+}
+
 bool behaviour_enabled(void* behaviour) {
     if (!g_behaviour_get_enabled || !behaviour)
         return false;
@@ -497,10 +512,16 @@ bool resolve() {
     g_camera_get_depth = make_call(il2cpp::find_method(camera, "get_depth", 0));
     g_camera_get_culling_mask = make_call(il2cpp::find_method(camera, "get_cullingMask", 0));
 
+    if (Il2CppClass* game_object = il2cpp::find_class(kCoreModule, "UnityEngine", "GameObject"))
+        g_game_object_active_in_hierarchy =
+            make_call(il2cpp::find_method(game_object, "get_activeInHierarchy", 0));
+
     if (Il2CppClass* behaviour = il2cpp::find_class(kCoreModule, "UnityEngine", "Behaviour"))
         g_behaviour_get_enabled = make_call(il2cpp::find_method(behaviour, "get_enabled", 0));
 
     if (Il2CppClass* component = il2cpp::find_class(kCoreModule, "UnityEngine", "Component")) {
+        g_component_get_game_object =
+            make_call(il2cpp::find_method(component, "get_gameObject", 0));
         g_component_get_component =
             make_call(il2cpp::find_overload(component, "GetComponent", 1, 0, "System.Type"));
     }

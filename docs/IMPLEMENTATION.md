@@ -238,12 +238,15 @@ That 660 is half the canvas growth, `(5160 - 3840) / 2`, and it is the whole fix
 It was verified as the game's own behaviour, not this fix's, before anything was written.
 With `Mode = off` and `LockAspect = 0` the log recorded zero anchor changes, zero pinned cameras and zero scale corrections, and the panel still sat in exactly the same wrong place.
 
-Two things the walk needed, both found the slow way:
+Three things the walk needed, all found the slow way:
 
 - **Not every Transform is a RectTransform.**
   `GetChild` returns plain Transforms for particle effects, and reading anchors off one produced a width of -1.48e30 in a dump. They are stepped over now, and their children still visited.
 - **Depth costs budget.**
-  The panel sits behind several hundred item icons, so a 600 node walk never reached it while the 6000 node dump did. The walk now stops as soon as every entry is placed, which keeps a 250 ms cadence affordable; at one second the panel visibly jumped into place after a menu opened.
+  The panel sits behind several hundred item icons, so a 600 node walk never reached it while the 6000 node dump did. At a one second cadence the panel then visibly jumped into place after a menu opened, so the walk had to get cheaper rather than rarer.
+- **Stopping early is the wrong economy.**
+  Halting the walk once every entry had been placed looked like the obvious saving, and it broke the feature: the game keeps every menu instantiated at once, so the first `Image_win` found ended the walk and Equipment and Tools were never reached. Only Inventory was ever fixed.
+  Skipping branches whose GameObject is inactive is the saving that actually works. Most of the tree is a menu nobody is looking at, so it costs far less than the early exit did, and what remains to walk is the menu on screen -- which is why all three panels are now found at a 250 ms cadence with budget to spare.
 
 **A nudge offset is only valid for one `Mode`.**
 The offset is derived from how far the canvas grew, so it depends on how wide the canvas is, and that is exactly what `Mode` decides.
