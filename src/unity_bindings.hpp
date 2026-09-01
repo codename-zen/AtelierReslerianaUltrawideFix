@@ -124,6 +124,7 @@ void* component_transform(void* component);
 int transform_child_count(void* transform);
 void* transform_child(void* transform, int index);
 Rect transform_rect(void* transform);
+void* transform_parent(void* transform);
 
 // RectTransform anchors. Vector2 is 8 bytes, so the x64 ABI moves it through an
 // integer register rather than XMM, both in and out.

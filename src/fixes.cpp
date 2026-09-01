@@ -10,6 +10,7 @@
 
 #include "anchors.hpp"
 #include "config.hpp"
+#include "earlyfix.hpp"
 #include "elements.hpp"
 #include "log.hpp"
 #include "unity_bindings.hpp"
@@ -477,14 +478,7 @@ void enforce_hud_viewport() {
     if (g_config.lock_hud_aspect <= 0.0f || !unity::bindings().camera_set_rect_info)
         return;
 
-    const float screen = unity::screen_aspect();
-
-    // A full viewport when the lock does not apply, so cameras pinned earlier
-    // are released again. The game flips back to a 16:9 resolution of its own
-    // accord, and leaving them pinned squeezed the UI a second time.
-    float fraction = 1.0f;
-    if (screen > g_config.lock_hud_aspect + 0.001f)
-        fraction = g_config.lock_hud_aspect / screen;
+    const float fraction = lock_band();
 
     // Two ways to reach the same 16:9 HUD, and they are mutually exclusive:
     // either the camera is narrowed, or the camera stays wide and the HUD's
@@ -653,6 +647,12 @@ float get_delta_time_hook(const MethodInfo* method) {
     poll_hotkeys();
     enforce_resolution();
 
+    // Deliberately not throttled. The recipe tree restores its container to the
+    // full canvas width and measures it very shortly afterwards, and the gap
+    // between those two is measured in frames, so anything on a timer is a
+    // coin toss. Almost every call reads one anchor and returns.
+    earlyfix::hold();
+
     // Menus open and close constantly, so this runs far more often than the
     // resolution check, but still not every frame.
     static ULONGLONG last_hud_pass = 0;
@@ -681,6 +681,16 @@ bool create(SafetyHookInline& hook, void* target, void* detour, const char* name
 
 } // namespace
 
+// A full band when the lock does not apply, so cameras pinned earlier are
+// released again. The game flips back to a 16:9 resolution of its own accord,
+// and leaving them pinned squeezed the UI a second time.
+float lock_band() {
+    const float screen = unity::screen_aspect();
+    if (screen <= g_config.lock_hud_aspect + 0.001f)
+        return 1.0f;
+    return g_config.lock_hud_aspect / screen;
+}
+
 bool install() {
     const unity::Bindings& bindings = unity::bindings();
 
@@ -704,6 +714,8 @@ bool install() {
            "Display::get_renderingWidth");
     create(g_display_get_system_width, bindings.display_get_system_width,
            reinterpret_cast<void*>(&display_get_system_width_hook), "Display::get_systemWidth");
+
+    earlyfix::install();
 
     if (bindings.canvas_scaler_available)
         create(g_canvas_scaler_handle, bindings.canvas_scaler_handle,

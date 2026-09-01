@@ -136,6 +136,7 @@ Verified in game at 3440x1440:
 - The description panel sits under its own labels in Inventory, Equipment and Exploration Equipment.
 - The Party screen's live 3D character has correct proportions.
 - The shop screens hold together: the results sequence keeps its level bars and pentagon chart on screen, the Shop Management button keeps its own icon, and Shop Overview keeps the rank panel beside the task list.
+- The Synthesis recipe tree is laid out for the right width on every opening, not just after switching recipes. That one took the longest: the tree computes its node positions once, from the width its container has at that instant, and the game restores that container to the full screen width moments before measuring it. See [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) section 12.
 
 The default `Mode = off` gives a full-width picture with no black bars and no HUD lock. It is the configuration verified end to end.
 

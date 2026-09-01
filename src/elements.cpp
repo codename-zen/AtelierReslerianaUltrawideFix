@@ -81,11 +81,12 @@ bool name_in_list(const std::string& name, const std::string& list) {
 // Children anchored to its edges come in with it; children anchored at its
 // centre do not move. That is the difference from a nudge, which shifts a
 // fixed-size element instead.
-// Returns true when it narrowed this node, which means the walk must not
+// Returns true when the node is one of ours, which means the walk must not
 // descend into it. Substring matching catches a container's own descendants --
 // 13_atelier_shop_result also matches 13_atelier_shop_result_task inside it --
 // and narrowing both put the layout at 0.744 squared, overlapping everything.
-// The same compounding that broke the anchors experiment, through a new door.
+// Not descending is also what keeps the nudges out: they exist to undo a
+// full-width container, and inside a narrowed one there is no longer one.
 bool constrain(void* child, const std::string& name, float band) {
     if (band >= 0.999f || !name_in_list(name, g_config.constrain_elements))
         return false;
@@ -114,8 +115,10 @@ bool constrain(void* child, const std::string& name, float band) {
     static int logged = 0;
     if (logged < 12) {
         ++logged;
-        LOG_INFO("Constrained '{}' x 0.000..1.000 -> {:.3f}..{:.3f}", name, minimum.x, maximum.x);
+        LOG_INFO("Constrained '{}'@{} x 0.000..1.000 -> {:.3f}..{:.3f}", name, child, minimum.x,
+                 maximum.x);
     }
+
     return true;
 }
 
@@ -269,6 +272,16 @@ void dump(void* canvas) {
     int budget = kMaxDumpNodes;
     size_t matched = 0;
     walk(unity::component_transform(canvas), 0, budget, true, {}, matched, 1.0f);
+}
+
+bool wants_correction(const char* name) {
+    return name && !g_config.constrain_elements.empty() &&
+           name_in_list(name, g_config.constrain_elements);
+}
+
+void correct_transform(void* rect_transform, const char* name, float band) {
+    if (rect_transform && name)
+        constrain(rect_transform, name, band);
 }
 
 void apply_nudges(void* canvas, float band) {

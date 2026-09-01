@@ -34,6 +34,7 @@ add_library(${PROJECT_NAME} SHARED
     src/anchors.cpp
     src/bootstrap.cpp
     src/elements.cpp
+    src/earlyfix.cpp
     src/config.cpp
     src/il2cpp_api.cpp
     src/unity_bindings.cpp

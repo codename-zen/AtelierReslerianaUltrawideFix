@@ -54,6 +54,7 @@ Call g_rt_set_anchor_min;
 Call g_rt_set_anchor_max;
 Call g_rt_get_anchored_position;
 Call g_rt_set_anchored_position;
+Call g_transform_get_parent;
 
 // A Vector2 travels in an integer register on this ABI, so it is moved as raw
 // bits rather than cast, which would go through the wrong register class.
@@ -433,6 +434,13 @@ void set_anchored_position(void* rect_transform, Vector2 value) {
     set_vector2(g_rt_set_anchored_position, rect_transform, value);
 }
 
+void* transform_parent(void* transform) {
+    if (!g_transform_get_parent || !transform)
+        return nullptr;
+    return reinterpret_cast<Il2CppObject* (*)(void*, const MethodInfo*)>(
+        g_transform_get_parent.ptr)(transform, g_transform_get_parent.info);
+}
+
 Rect transform_rect(void* transform) {
     Rect rect{0.0f, 0.0f, 0.0f, 0.0f};
     if (!g_rect_transform_get_rect || !transform)
@@ -616,6 +624,7 @@ bool resolve() {
         g_transform_get_child_count =
             make_call(il2cpp::find_method(transform, "get_childCount", 0));
         g_transform_get_child = make_call(il2cpp::find_method(transform, "GetChild", 1));
+        g_transform_get_parent = make_call(il2cpp::find_method(transform, "get_parent", 0));
     }
 
     if (Il2CppClass* object_class = il2cpp::find_class(kCoreModule, "UnityEngine", "Object"))

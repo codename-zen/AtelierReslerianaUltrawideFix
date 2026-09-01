@@ -106,8 +106,15 @@ IL2CPP's native convention is `(instance, args..., const MethodInfo*)`, or `(arg
 | `Camera::set_fieldOfView(float)` | Optional FOV offset and Vert- correction |
 | `Time::get_deltaTime()` | Per-frame main-thread pump for everything below |
 | `Screen`/`Display` getters | Aspect spoofing, off by default: it did not work and broke the options screen |
+| `UnityEngine.UI.ScrollRect::OnEnable()` | Identifies a screen the moment it comes alive, so its container can be held narrow (section 12) |
 
-Two details worth keeping in mind:
+**Only ordinary managed methods can be hooked in this build.**
+Anything declared `extern` in the Unity assemblies -- `Object.Internal_CloneSingle`, `RectTransform.anchorMin`'s setter, `Transform.SetParent(Transform, bool)` -- is an internal call, and this IL2CPP build inlines it straight into its callers.
+The wrapper whose `methodPointer` is hookable is then never executed by game code.
+This was learned twice, expensively: four Instantiate funnels hooked for a whole session caught nothing, and an anchor-setter hook appeared to work while in fact only observing this mod's own writes coming back through it.
+`ScrollRect::OnEnable` works because it is real C# in the uGUI package, invoked by the runtime through the very pointer being hooked, so there is nothing for it to be inlined into.
+
+Two more details worth keeping in mind:
 
 **Aspect must follow the viewport, not the screen.**
 Forcing screen aspect onto a camera narrowed to a 16:9 band gives it a projection wider than its viewport, which squashes everything it draws by 26 percent.
@@ -285,7 +292,57 @@ This was learned by clobbering it. Deploying the repository's INI over the one i
 Matching is by substring, so clone suffixes do not matter -- and neither does specificity, which is the catch.
 `Image_win` is a generic name, so every panel using it moves. That is right where the same displacement applies and wrong where a panel is meant to stay centred, so a new nudge is worth checking across a few screens.
 
-## 12. The plugin loads in more than one process
+## 12. The recipe tree, and layout that is computed once
+
+The recipe tree was the single hardest thing in this project, and the reason is worth writing down: it is not a layout that can be corrected, it is a layout that is **computed**.
+
+Its container, `11_mix_tree(Clone)`, is anchored `0..1`, so it stretches to whatever the canvas is: 3840 units at 16:9, 5160 at 21:9.
+The game reads that width once, while filling the tree in, and writes every node position from it.
+A tree laid out for 5160 and then shown inside a 3840 frame puts its first node 660 units off the left edge -- exactly `(5160 - 3840) / 2`, which is what made the error identifiable rather than mysterious.
+Narrowing the container afterwards changes nothing, because the positions are already written.
+
+So this is a race, not a setting, and the deadline is the moment the tree is filled in.
+
+**What the logs established, in order.**
+
+The container's address is the same for the whole session, so it is reused rather than rebuilt.
+Yet its anchors read `0.000..1.000` on every opening, which means the game restores the full width each time -- shortly after the screen comes alive, and shortly before measuring it.
+The observed gap between the two ranged from 10 ms to 222 ms, which is exactly why a 250 ms pass produced a layout that was sometimes right and sometimes not.
+
+**Two approaches that cannot work here, with the evidence.**
+
+*Intercepting the write.* It never reaches a hookable method -- see section 5.
+The instrumented run showed writes of `0.128` arriving at the anchor-setter hook, which is this mod's own value: the hook was watching itself.
+The game's own `0.000` never appeared once.
+
+*Inserting a narrow parent.* A parent is only as good as the child staying in it.
+The tree is parked under a container named `ResidentAsset` between openings and moved back into the presenter each time, which walks it straight out of any parent inserted above it.
+The log caught this precisely: the same container clamped twice 19 ms apart, the second time with the parent already renamed from `CommonAnimation(Clone)` to `MixTreePresenterAnimation` at the identical address.
+
+**What works.**
+
+Nothing clever -- just being fast enough, in the right place.
+
+`ScrollRect::OnEnable` fires when the tree's scroll view comes alive, on every opening without exception.
+From there the ancestor chain is walked up to eight levels looking for a name in `ConstrainElements`, and the container found is recorded in a small watch list.
+
+The `deltaTime` pump then re-applies the correction to every watched container **every frame, unthrottled**.
+Almost every call reads one anchor and returns; only when the width has been taken away does it write, and then it confirms the pointer still refers to the same object by name before doing so, since an address can be reused after a collection.
+
+The result is a consistent one-frame recovery:
+
+```
+14:41:30.706  Watching '11_mix_tree(Clone)'@0x24d6bd28e60
+14:41:30.718  Constrained '11_mix_tree(Clone)' x 0.000..1.000 -> 0.128..0.872
+```
+
+Twelve milliseconds at 165 fps, on every opening.
+The game still takes the width away; it simply never holds it long enough to measure.
+
+This remains a race rather than a guarantee.
+If a future patch restored the width and filled the tree within a single frame, nothing here would catch it, and the fix would have to become "make the game read a different number" -- hooking `RectTransform::get_rect` for the watched containers -- rather than "give it a different width".
+
+## 13. The plugin loads in more than one process
 
 `UnityCrashHandler64.exe` sits in the same folder and imports `VERSION.dll` too, so the loader picks this plugin up there as well.
 
@@ -295,7 +352,7 @@ The check is now the first thing `initialise` does, before the log is even opene
 
 Worth remembering when reading a log that contradicts itself: two processes can be writing to it.
 
-## 13. Adding another hook
+## 14. Adding another hook
 
 1. Resolve it in `unity::resolve()` with `il2cpp::method_pointer(il2cpp::find_method(klass, "Name", argc))`.
 2. Write a detour matching IL2CPP's convention, remembering the trailing `const MethodInfo*`, and pass structs larger than 8 bytes by pointer.
