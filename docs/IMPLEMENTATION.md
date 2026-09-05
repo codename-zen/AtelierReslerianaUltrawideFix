@@ -101,7 +101,7 @@ IL2CPP's native convention is `(instance, args..., const MethodInfo*)`, or `(arg
 
 | Managed method | What it does here |
 | --- | --- |
-| `Camera::set_aspect(float)` | Rewrites a forced aspect to the camera's own **viewport** aspect |
+| `Camera::set_aspect(float)` | Rewrites a forced aspect to the camera's own **viewport** aspect, or to `LockAspect` when the camera draws into an over-wide texture (section 10) |
 | `Camera::set_rect(Rect)` | Undoes centred letterboxing; `Rect` is 16 bytes so the x64 ABI passes it **by pointer** |
 | `Camera::set_fieldOfView(float)` | Optional FOV offset and Vert- correction |
 | `Time::get_deltaTime()` | Per-frame main-thread pump for everything below |
@@ -258,6 +258,16 @@ Worth separating from the earlier "penyet" bug, which looked identical on
 screen. That one was a camera whose *own* aspect had been forced to the screen's
 while its viewport was 16:9. This one is a camera whose aspect is right for its
 texture, and wrong for where the texture ends up.
+
+**The correction has to be re-applied, and not by remembering the camera.**
+Setting the aspect once is not enough: the game writes the screen aspect back onto these cameras, and at the periodic pass's quarter-second cadence the character spends most of its frames squeezed.
+The first attempt at holding it kept a list of these cameras and re-asserted their aspect every frame, refreshed every 250 ms so a pointer could never be very stale.
+A quarter of a second turned out to be plenty of time for a menu to close and its camera to be destroyed, and the game crashed inside this plugin.
+Unity object pointers must not be held across frames.
+
+What works instead is rewriting the value on its way past, in the `Camera::set_aspect` hook that already exists.
+A camera with a target texture wider than `LockAspect` gets `LockAspect` written instead of whatever the game asked for.
+Nothing is remembered, nothing is polled, and the object is alive by definition because the call is on it.
 
 ## 11. Per-element nudges
 

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include <safetyhook.hpp>
 
@@ -80,7 +81,9 @@ void enforce_resolution() {
 
 // UnityEngine.Camera::set_aspect(float)
 void set_aspect_hook(void* self, float value, const MethodInfo* method) {
-    if (g_config.unlock_camera_aspect && !unity::camera_has_target_texture(self)) {
+    const bool has_texture = unity::camera_has_target_texture(self);
+
+    if (g_config.unlock_camera_aspect && !has_texture) {
         // The right aspect is the camera's own viewport, not the whole screen.
         // Using the screen would squash everything drawn by a camera we have
         // narrowed to a 16:9 band.
@@ -90,7 +93,23 @@ void set_aspect_hook(void* self, float value, const MethodInfo* method) {
                 LOG_INFO("Camera::set_aspect {:.4f} -> {:.4f}", value, actual);
             value = actual;
         }
+    } else if (has_texture && g_config.correct_render_texture_aspect &&
+               g_config.lock_hud_aspect > 0.0f) {
+        // The periodic correction below sets these cameras once; the game keeps
+        // writing the screen aspect back, and every frame in between is drawn 26
+        // percent narrow. Rewriting the value as it goes past is what makes it
+        // stay -- and unlike remembering the camera and re-asserting it each
+        // frame, which crashed on one the game had since destroyed, the object
+        // here is alive by definition: this is a call on it.
+        int width = 0;
+        int height = 0;
+        unity::camera_target_texture_size(self, width, height);
+        if (width > 0 && height > 0 &&
+            static_cast<float>(width) / static_cast<float>(height) >
+                g_config.lock_hud_aspect + 0.001f)
+            value = g_config.lock_hud_aspect;
     }
+
     g_set_aspect.unsafe_call<void>(self, value, method);
 }
 

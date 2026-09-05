@@ -18,8 +18,18 @@ constexpr int kMaxDepth = 12;
 constexpr int kMaxDumpNodes = 6000;
 // The Inventory alone puts hundreds of item icons between the canvas root and
 // the panel worth moving, and 600 ran out long before reaching it. Inactive
-// branches are skipped, which is what keeps a walk this deep cheap.
-constexpr int kMaxNudgeNodes = 5000;
+// branches are skipped, which is what keeps a walk this deep affordable.
+//
+// 5000 was enough in town and not in a dungeon, where the game keeps several
+// menu screens live at once: the description panel sits at depth nine under
+// 16_mainmenu_equipment, behind every item icon in the inventory, and the walk
+// ran out before reaching it. The panel then kept the position the game gave it
+// and its own labels spilled out past its left edge.
+//
+// This is a cap rather than a workload -- the walk visits the nodes that are
+// there and stops -- so a generous one costs nothing. A dungeon menu measured
+// 3100 nodes, and the session that failed had four screens open at once.
+constexpr int kMaxNudgeNodes = 30000;
 // Only containers are worth printing. Every icon and glyph in the tree would
 // bury the panel being looked for.
 constexpr float kMinDumpWidth = 1200.0f;
@@ -296,6 +306,18 @@ void apply_nudges(void* canvas, float band) {
     int budget = kMaxNudgeNodes;
     size_t matched = 0;
     walk(unity::component_transform(canvas), 0, budget, false, nudges, matched, band);
+
+    // What the walk actually costs, so the budget above can be sized from
+    // evidence rather than raised until it happens to work.
+    static int reported = 0;
+    // Only walks big enough to be worth sizing the budget against; the ones
+    // that run before a menu is open are a couple of hundred nodes and would
+    // otherwise use up the whole allowance.
+    if (kMaxNudgeNodes - budget > 3000 && reported < 6) {
+        ++reported;
+        LOG_INFO("Nudge walk of '{}' visited {} nodes and placed {} of {}",
+                 unity::object_name(canvas), kMaxNudgeNodes - budget, matched, nudges.size());
+    }
 
     if (budget <= 0 && matched < nudges.size()) {
         static int warned = 0;
